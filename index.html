@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Research Idea Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* A light background for the tool */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white p-8 rounded-xl shadow-lg">
+            <div class="space-y-6">
+                <div>
+                    <label for="topic-select" class="block mb-2 text-sm font-medium text-gray-900">1. Select an Expertise Area:</label>
+                    <select id="topic-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5">
+                        <option selected disabled value="">Choose a topic</option>
+                        <option value="Adsorption">Adsorption</option>
+                        <option value="Biochar Production">Biochar Production</option>
+                        <option value="Biomass Thermochemical Conversion">Biomass Thermochemical Conversion</option>
+                        <option value="Carbon Footprint">Carbon Footprint</option>
+                        <option value="Energy Conversion from Biomass">Energy Conversion from Biomass</option>
+                        <option value="Pyrolysis">Pyrolysis</option>
+                        <option value="Waste Utilization">Waste Utilization</option>
+                    </select>
+                </div>
+
+                <div id="subcategory-container" class="hidden">
+                    <label for="subcategory-select" class="block mb-2 text-sm font-medium text-gray-900">2. Select a Subcategory:</label>
+                    <select id="subcategory-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div id="custom-subcategory-container" class="hidden">
+                    <label for="custom-subcategory-input" class="block mb-2 text-sm font-medium text-gray-900">Please specify your subcategory:</label>
+                    <input type="text" id="custom-subcategory-input" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5" placeholder="e.g., Algae-based biofuels">
+                </div>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                    <button id="generate-ideas-btn" class="w-full bg-emerald-500 text-white px-4 py-3 rounded-lg hover:bg-emerald-600 transition duration-300 font-medium text-base">
+                        Generate Research Project Ideas
+                    </button>
+                    <button id="clear-form-btn" class="w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300 transition duration-300 font-medium text-base">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading-spinner" class="hidden text-center py-8">
+                <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-emerald-500 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-2 text-gray-500">Generating ideas...</p>
+            </div>
+
+            <div id="ideas-output" class="mt-8 space-y-4 text-gray-700"></div>
+        </div>
+    </div>
+    
+    <script>
+        const generateBtn = document.getElementById('generate-ideas-btn');
+        const clearBtn = document.getElementById('clear-form-btn');
+        const topicSelect = document.getElementById('topic-select');
+        const subcategoryContainer = document.getElementById('subcategory-container');
+        const subcategorySelect = document.getElementById('subcategory-select');
+        const customSubcategoryContainer = document.getElementById('custom-subcategory-container');
+        const customSubcategoryInput = document.getElementById('custom-subcategory-input');
+        const ideasOutput = document.getElementById('ideas-output');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        const expertiseData = {
+            "Adsorption": ["Wastewater Contaminant Removal", "Gas Purification & Separation"],
+            "Biochar Production": ["Agricultural Waste Valorization", "Sludge Management"],
+            "Biomass Thermochemical Conversion": ["Gasification Techniques", "Hydrothermal Liquefaction"],
+            "Carbon Footprint": ["Life Cycle Assessment (LCA)", "Corporate Carbon Accounting"],
+            "Energy Conversion from Biomass": ["Biofuel Production", "Waste-to-Energy Systems"],
+            "Pyrolysis": ["Plastic Waste Pyrolysis", "Catalytic Pyrolysis"],
+            "Waste Utilization": ["Construction & Demolition Waste", "Industrial Symbiosis"]
+        };
+
+        topicSelect.addEventListener('change', () => {
+            const selectedTopic = topicSelect.value;
+            customSubcategoryContainer.classList.add('hidden');
+            customSubcategoryInput.value = '';
+
+            if (selectedTopic && expertiseData[selectedTopic]) {
+                const subcategories = expertiseData[selectedTopic];
+                subcategorySelect.innerHTML = `<option selected disabled value="">Choose a subcategory</option>`;
+                
+                const generalOption = document.createElement('option');
+                generalOption.value = 'General';
+                generalOption.textContent = 'General';
+                subcategorySelect.appendChild(generalOption);
+                
+                subcategories.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subcategorySelect.appendChild(option);
+                });
+
+                const otherOption = document.createElement('option');
+                otherOption.value = 'Other';
+                otherOption.textContent = 'Other (Please specify)';
+                subcategorySelect.appendChild(otherOption);
+
+                subcategoryContainer.classList.remove('hidden');
+            } else {
+                subcategoryContainer.classList.add('hidden');
+            }
+        });
+
+        subcategorySelect.addEventListener('change', () => {
+            if (subcategorySelect.value === 'Other') {
+                customSubcategoryContainer.classList.remove('hidden');
+            } else {
+                customSubcategoryContainer.classList.add('hidden');
+            }
+        });
+
+        const callNetlifyFunction = async (prompt) => {
+            // This relative path will work correctly once deployed on Netlify
+            const functionUrl = '/.netlify/functions/generate-ideas';
+
+            try {
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+
+            } catch (error) {
+                console.error("Fetch call to Netlify Function failed:", error);
+                throw error;
+            }
+        };
+
+        generateBtn.addEventListener('click', async () => {
+            const selectedTopic = topicSelect.value;
+            let selectedSubcategory = subcategorySelect.value;
+
+            if (selectedSubcategory === 'Other') {
+                selectedSubcategory = customSubcategoryInput.value.trim();
+                if (!selectedSubcategory) {
+                    ideasOutput.innerHTML = '<p class="text-red-500 text-center">Please specify your custom subcategory.</p>';
+                    return;
+                }
+            }
+
+            if (!selectedTopic || !selectedSubcategory) {
+                ideasOutput.innerHTML = '<p class="text-red-500 text-center">Please select a topic and a subcategory first.</p>';
+                return;
+            }
+
+            ideasOutput.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+            generateBtn.disabled = true;
+
+            let prompt;
+            if (selectedSubcategory.toLowerCase() === 'general') {
+                 prompt = `You are an expert Environmental Engineering professor. Generate exactly three distinct and innovative research project ideas for a graduate student. The research should be supervised by a professor specializing in the general area of "${selectedTopic}". For each idea, provide a clear title and a concise one-paragraph description (2-3 sentences). The tone should be encouraging and academic. Present the output as a numbered list.`;
+            } else {
+                 prompt = `You are an expert Environmental Engineering professor. Generate exactly three distinct and innovative research project ideas for a graduate student. The research should be supervised by a professor specializing in "${selectedTopic}" with a specific focus on "${selectedSubcategory}". For each idea, provide a clear title and a concise one-paragraph description (2-3 sentences). The tone should be encouraging and academic. Present the output as a numbered list.`;
+            }
+
+            try {
+                const result = await callNetlifyFunction(prompt);
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    let formattedText = candidate.content.parts[0].text;
+                    formattedText = formattedText.replace(/\n/g, '<br>');
+                    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    ideasOutput.innerHTML = `<div class="p-4 bg-gray-100 rounded-md">${formattedText}</div>`;
+                } else {
+                     throw new Error("No valid content received from the API. The response may be empty or blocked.");
+                }
+            } catch (error) {
+                console.error("Error generating ideas:", error);
+                ideasOutput.innerHTML = `<p class="text-red-500 text-center">Sorry, an error occurred while generating ideas. Please check the function logs on Netlify for details.</p>`;
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                generateBtn.disabled = false;
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            topicSelect.value = "";
+            ideasOutput.innerHTML = '';
+            loadingSpinner.classList.add('hidden');
+            subcategoryContainer.classList.add('hidden');
+            customSubcategoryContainer.classList.add('hidden');
+            customSubcategoryInput.value = '';
+        });
+    </script>
+</body>
+</html>

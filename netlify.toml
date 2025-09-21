@@ -1,0 +1,5 @@
+# This file tells Netlify where to find your serverless functions.
+# It should be placed in the root of your "Research Generator" project folder.
+
+[build]
+  functions = "netlify/functions"
