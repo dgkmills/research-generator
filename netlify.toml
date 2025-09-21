@@ -1,5 +1,14 @@
-# This file tells Netlify where to find your serverless functions.
-# It should be placed in the root of your "Research Generator" project folder.
+# This file tells Netlify where to find your serverless functions
+# and what directory to publish for the static site.
 
 [build]
+  # Directory with the static files to publish (the root folder in this case)
+  publish = "."
+  # Directory where the serverless functions are located
   functions = "netlify/functions"
+
+# The [dev] block gives explicit instructions to the local server
+[dev]
+  # Specifies the directory to serve static files from locally
+  publish = "."
+

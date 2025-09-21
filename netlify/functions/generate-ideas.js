@@ -15,7 +15,8 @@ exports.handler = async function(event, context) {
             throw new Error("API key is not set in environment variables.");
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+        // --- FIX: Updated the model name in the URL ---
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
         const payload = {
             contents: [{
@@ -58,3 +59,4 @@ exports.handler = async function(event, context) {
         };
     }
 };
+
